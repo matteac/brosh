@@ -1,0 +1,72 @@
+* {
+  margin: 0px;
+  padding: 0px;
+}
+
+
+body {
+  display: flex;
+
+  font-family: monospace;
+  font-size: 2rem;
+
+  height: 100svh;
+  width: 100svw;
+
+  background-color: #000;
+  color: #fff;
+}
+
+.terminal {
+  display: flex;
+  flex-direction: column;
+
+  width: 100%;
+}
+
+.output {
+  max-height: 100%;
+
+  overflow-y: scroll;
+
+  word-wrap: break-word;
+}
+
+.input-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+
+  width: 100%;
+}
+
+.input {
+  display: flex;
+
+  background: none;
+  border: none;
+  outline: none;
+
+  font-family: monospace;
+  font-size: 2rem;
+
+  width: 100%;
+
+  color: #fff;
+  caret-color: #fff;
+}
+
+.prompt {
+  color: #0f0;
+
+  white-space: nowrap;
+}
+
+.active-prompt::after {
+  content: ".";
+  color: transparent;
+}
+
+.error {
+  color: #f00;
+}
