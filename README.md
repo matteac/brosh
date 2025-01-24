@@ -28,4 +28,4 @@ Type commands directly into the terminal interface. Use `builtins` to see the fu
 
 ## License
 
-Brosh is licensed under the MIT License.
+Brosh is licensed under the [MIT License](LICENSE).
