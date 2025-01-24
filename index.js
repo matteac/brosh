@@ -7,11 +7,19 @@ const prompt = document.querySelector(".active-prompt");
 const title = document.querySelector(".title");
 
 class Sys {
+	history = [];
+	blacklist = [];
+	history_index = -1;
+
 	builtins = {};
+
 	argv = [];
+
 	cur_dir = "/";
 	home_dir = "/";
+
 	path = ["/bin"];
+
 	file_sys = {};
 
 	constructor() {
@@ -34,16 +42,49 @@ class Sys {
 		this.add_builtin("write");
 		this.add_builtin("append");
 
+		this.add_builtin("hist");
+		this.blacklist_hist("hist");
 		this.add_builtin("builtins", "list_builtins");
 	}
 
 	add_builtin(cmd, fn_name) {
-		fn_name = fn_name ? fn_name : cmd;
+		const fn = fn_name ? fn_name : cmd;
 
-		this.builtins[cmd] = fn_name;
+		this.builtins[cmd] = fn;
 
 		this.create_file(`/bin/${cmd}`);
-		this.write_file(`/bin/${cmd}`, `sys.${fn_name}()`);
+		this.write_file(`/bin/${cmd}`, `sys.${fn}()`);
+	}
+
+	blacklist_hist(cmd) {
+		this.blacklist.push(cmd);
+	}
+	add_to_hist(cmd, args) {
+		if (this.blacklist.includes(cmd)) {
+			return;
+		}
+
+		this.history.push(`${cmd} ${args.join(" ")}`.trim());
+		this.history_index = this.history.length;
+	}
+
+	get_prev_cmd() {
+		if (this.history_index > 0) {
+			this.history_index--;
+			return this.history[this.history_index];
+		}
+		return null;
+	}
+
+	get_next_cmd() {
+		if (this.history_index < this.history.length) {
+			this.history_index++;
+			if (this.history_index === this.history.length) {
+				return "";
+			}
+			return this.history[this.history_index];
+		}
+		return "";
 	}
 
 	exec(cmd, args) {
@@ -54,7 +95,10 @@ class Sys {
 		}
 
 		this.argv = args;
+
+		//biome-ignore lint/security/noGlobalEval: gg
 		eval(file.content);
+
 		this.argv = [];
 	}
 
@@ -221,7 +265,7 @@ class Sys {
 			_dir = _dir[dir];
 		}
 
-		let entries = {};
+		const entries = {};
 		for (const key of Object.keys(_dir).filter((e) => e !== "__meta__file")) {
 			entries[key] = _dir[key].__meta__file;
 		}
@@ -360,6 +404,10 @@ class Sys {
 	list_builtins() {
 		Object.keys(this.builtins).forEach(this.print);
 	}
+
+	hist() {
+		this.history.forEach(this.print);
+	}
 }
 
 const sys = new Sys();
@@ -368,12 +416,32 @@ prompt.innerHTML = `${sys.cur_dir} ${PROMPT_SYM}`;
 title.innerHTML = `${sys.cur_dir}`;
 
 input.addEventListener("keydown", (event) => {
-	if (event.key == "Enter") {
+	if (event.key === "ArrowUp") {
+		const cmd = sys.get_prev_cmd();
+		if (!cmd) {
+			return;
+		}
+
+		input.value = cmd;
+		setTimeout(() => {
+			input.focus();
+			input.setSelectionRange(cmd.length, cmd.length);
+		}, 1);
+	} else if (event.key === "ArrowDown") {
+		const cmd = sys.get_next_cmd();
+
+		input.value = cmd;
+		setTimeout(() => {
+			input.focus();
+			input.setSelectionRange(cmd.length, cmd.length);
+		}, 1);
+	}
+
+	if (event.key === "Enter") {
 		const src = event.target.value;
 		sys.print(
 			`<span class="prompt">${sys.cur_dir} ${PROMPT_SYM}</span> ${src}`,
 		);
-
 		event.target.value = "";
 		const [cmd, ...args] = src
 			.split(" ")
@@ -383,6 +451,8 @@ input.addEventListener("keydown", (event) => {
 		if (!cmd) {
 			return;
 		}
+
+		sys.add_to_hist(cmd, args);
 
 		try {
 			sys.exec(cmd, args);
