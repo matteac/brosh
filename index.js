@@ -28,6 +28,19 @@ class Sys {
 	file_sys = {};
 
 	constructor() {
+		this.create_file("/example.js");
+		this.write_file(
+			"/example.js",
+			`// execute this file with the "js" command
+if (!sys.exists("a.out")) {
+	sys.print("Creating a.out")
+	sys.create_file("a.out")
+}
+sys.print("Writing to a.out")
+sys.write_file("a.out", "not a binary")
+`,
+		);
+
 		this.create_dir("/bin");
 
 		this.add_builtin("mkdir");
@@ -46,6 +59,8 @@ class Sys {
 
 		this.add_builtin("edit");
 		this.add_builtin("cat");
+
+		this.add_builtin("js");
 
 		this.add_builtin("hist");
 		this.blacklist_hist("hist");
@@ -455,6 +470,24 @@ class Sys {
 			this.print(`file: ${this.resolve_path(filename)}`);
 			this.print("-----");
 			this.print(`${file.content}\n`);
+		}
+	}
+
+	js() {
+		if (this.argv.length <= 0) {
+			this.eprint("Usage: js &lt;file(s)&gt;");
+			return;
+		}
+
+		for (const filename of this.argv) {
+			const file = this.get_file(filename);
+			if (!file) {
+				this.eprint(`File doesn't exists: ${filename}`);
+				continue;
+			}
+
+			//biome-ignore lint/security/noGlobalEval: gg
+			eval(file.content);
 		}
 	}
 }
