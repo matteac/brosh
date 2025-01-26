@@ -427,8 +427,6 @@ class Sys {
 			return;
 		}
 
-		console.log(file);
-
 		editor_text.value = file.content;
 		editor.showModal();
 
@@ -456,7 +454,7 @@ class Sys {
 
 			this.print(`file: ${this.resolve_path(filename)}`);
 			this.print("-----");
-			this.print(file.content + "\n");
+			this.print(`${file.content}\n`);
 		}
 	}
 }
