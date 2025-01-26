@@ -1,20 +1,26 @@
 * {
   margin: 0px;
   padding: 0px;
-}
 
+  font-family: monospace;
+  font-size: 1.5rem;
+
+  color: #0f0;
+  background-color: #000;
+}
 
 body {
   display: flex;
 
-  font-family: monospace;
-  font-size: 2rem;
-
   height: 100svh;
   width: 100svw;
 
-  background-color: #000;
   color: #fff;
+}
+
+.empty::after {
+  content: ".";
+  color: transparent;
 }
 
 .terminal {
@@ -32,6 +38,10 @@ body {
   word-wrap: break-word;
 }
 
+.output-line {
+  color: #fff;
+}
+
 .input-container {
   display: flex;
   flex-direction: row;
@@ -43,12 +53,8 @@ body {
 .input {
   display: flex;
 
-  background: none;
   border: none;
   outline: none;
-
-  font-family: monospace;
-  font-size: 2rem;
 
   width: 100%;
 
@@ -57,8 +63,6 @@ body {
 }
 
 .prompt {
-  color: #0f0;
-
   white-space: nowrap;
 }
 
@@ -69,4 +73,60 @@ body {
 
 .error {
   color: #f00;
+}
+
+#editor {
+  border: 2px solid #0f0;
+
+  align-self: center;
+  justify-self: center;
+}
+
+#editor[open],
+#editor-form {
+  display: flex;
+  flex-direction: column;
+
+  width: 100%;
+  height: 100%;
+}
+
+#editor-text {
+  padding: .8rem;
+  color: #fff;
+
+  border: none;
+  outline: none;
+
+  height: 100%;
+}
+
+#editor-buttons {
+  display: flex;
+  flex-direction: row;
+
+  height: 10%;
+}
+
+.editor-button {
+  color: #fff;
+
+  border: 1px solid #0f0;
+  border-bottom: none;
+  border-top: 2px solid #0f0;
+  border-right: none;
+
+  width: 50%;
+}
+
+#save-file {
+  border-right: 1px solid #0f0;
+  border-left: none;
+}
+
+.editor-button:hover,
+.editor-button:focus {
+  color: #000;
+  background-color: #0f0;
+  outline: none;
 }

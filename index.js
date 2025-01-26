@@ -4,7 +4,12 @@ const terminal = document.querySelector(".terminal");
 const output = document.querySelector(".output");
 const input = document.querySelector(".input");
 const prompt = document.querySelector(".active-prompt");
+
 const title = document.querySelector(".title");
+
+const editor = document.querySelector("#editor");
+const editor_text = document.querySelector("#editor-text");
+const save_file_button = document.querySelector("#save-file");
 
 class Sys {
 	history = [];
@@ -39,8 +44,8 @@ class Sys {
 		this.add_builtin("pwd");
 		this.add_builtin("cd");
 
-		this.add_builtin("write");
-		this.add_builtin("append");
+		this.add_builtin("edit");
+		this.add_builtin("cat");
 
 		this.add_builtin("hist");
 		this.blacklist_hist("hist");
@@ -59,6 +64,7 @@ class Sys {
 	blacklist_hist(cmd) {
 		this.blacklist.push(cmd);
 	}
+
 	add_to_hist(cmd, args) {
 		if (this.blacklist.includes(cmd)) {
 			return;
@@ -295,7 +301,7 @@ class Sys {
 
 	print(string) {
 		for (const line of string.split("\n"))
-			output.innerHTML += `<div class="output-line">${line}</div>`;
+			output.innerHTML += `<div class="output-line${line === "" ? " empty" : ""}">${line}</div>`;
 	}
 	eprint(string) {
 		for (const line of string.split("\n"))
@@ -407,6 +413,51 @@ class Sys {
 
 	hist() {
 		this.history.forEach(this.print);
+	}
+
+	edit() {
+		if (this.argv.length <= 0 || this.argv.length > 1) {
+			this.eprint("Usage: edit &lt;file&gt;");
+			return;
+		}
+
+		const file = this.get_file(this.argv[0]);
+		if (!file) {
+			this.eprint(`File doesn't exists: ${this.argv[0]}`);
+			return;
+		}
+
+		console.log(file);
+
+		editor_text.value = file.content;
+		editor.showModal();
+
+		editor.addEventListener("close", () => {
+			editor_text.value = "";
+		});
+
+		save_file_button.addEventListener("click", () => {
+			file.content = editor_text.value;
+		});
+	}
+
+	cat() {
+		if (this.argv.length <= 0) {
+			this.eprint("Usage: cat &lt;file(s)&gt;");
+			return;
+		}
+
+		for (const filename of this.argv) {
+			const file = this.get_file(filename);
+			if (!file) {
+				this.eprint(`File doesn't exists: ${filename}`);
+				continue;
+			}
+
+			this.print(`file: ${this.resolve_path(filename)}`);
+			this.print("-----");
+			this.print(file.content + "\n");
+		}
 	}
 }
 
