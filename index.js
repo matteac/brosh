@@ -315,11 +315,13 @@ sys.write_file("a.out", "not a binary")
 	}
 
 	print(string) {
-		for (const line of string.split("\n"))
+		const str = `${string}`;
+		for (const line of str.split("\n"))
 			output.innerHTML += `<div class="output-line${line === "" ? " empty" : ""}">${line}</div>`;
 	}
 	eprint(string) {
-		for (const line of string.split("\n"))
+		const str = `${string}`;
+		for (const line of str.split("\n"))
 			output.innerHTML += `<div class="error output-line">${line}</div>`;
 	}
 
