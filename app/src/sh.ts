@@ -33,7 +33,9 @@ export class Shell {
 		this.add_builtin("touch");
 		this.add_builtin("rm");
 		this.add_builtin("cat");
-		this.add_builtin("ed", "editor");
+		this.add_builtin("edit");
+
+		this.add_builtin("js");
 
 		this.add_builtin("hist");
 		this.blacklist_hist("hist");
@@ -114,6 +116,7 @@ function sum(a, b) {
 		}
 
 		this.add_to_hist(cmd, args);
+		this.history.index = this.history.cmds.length; // reset hist index
 
 		const exe = this.get_exe(cmd);
 
@@ -122,7 +125,11 @@ function sum(a, b) {
 			return 1;
 		}
 
-		const fn = new Function(exe).call(this);
+		return this.run(exe, args);
+	}
+
+	run(source: string, args: string[]): number {
+		const fn = new Function(source).call(this);
 		return fn.call(this, args.length, args);
 	}
 
@@ -316,15 +323,15 @@ function sum(a, b) {
 		return 0;
 	}
 
-	editor(argc: number, argv: string[]): number {
+	edit(argc: number, argv: string[]): number {
 		if (argc <= 0) {
-			this.io.eprint("Usage: ed &lt;FILE&gt;");
+			this.io.eprint("Usage: edit &lt;FILE&gt;");
 			return 1;
 		}
 
 		if (argc > 1) {
 			this.io.eprint("Too many arguments");
-			this.io.eprint("Usage: ed &lt;FILE&gt;");
+			this.io.eprint("Usage: edit &lt;FILE&gt;");
 			return 1;
 		}
 
@@ -337,6 +344,22 @@ function sum(a, b) {
 		this.ed.open(file);
 
 		return 0;
+	}
+
+	js(argc: number, argv: string[]): number {
+		if (argc <= 0) {
+			this.io.eprint("Usage: js &lt;FILE&gt; [ARGS]");
+			return 1;
+		}
+
+		const source = this.fs.read_file(argv[0]);
+		if (typeof source !== "string") {
+			this.io.eprint(source.msg);
+			return 1;
+		}
+
+		argv.shift();
+		return this.run(source, argv);
 	}
 
 	hist(argc: number, _argv: string[]): number {

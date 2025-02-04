@@ -22,6 +22,12 @@ export class Editor {
 		this.dialog.addEventListener("close", () => {
 			this.close();
 		});
+		this.dialog.addEventListener("keydown", (e) => {
+			if (e.key === "Escape") {
+				e.preventDefault();
+				return;
+			}
+		});
 	}
 
 	open(file: File) {
