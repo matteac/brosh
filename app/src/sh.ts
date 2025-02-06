@@ -9,6 +9,7 @@ export class Shell {
 	ed: Editor;
 	env: Env;
 	builtins: string[];
+	aliases: Map<string, string>;
 	history: { cmds: string[]; index: number; blacklist: string[] };
 
 	constructor(fs: FileSys, io: IO, ed: Editor, env: Env) {
@@ -17,10 +18,11 @@ export class Shell {
 		this.ed = ed;
 		this.env = env;
 		this.builtins = [];
+		this.aliases = new Map();
 		this.history = { cmds: [], index: -1, blacklist: [] };
 
 		this.add_builtin("clear");
-		this.add_builtin("cls", "clear");
+		this.aliases.set("cls", "clear");
 
 		this.add_builtin("cd");
 		this.add_builtin("ls");
@@ -28,6 +30,7 @@ export class Shell {
 
 		this.add_builtin("set");
 		this.add_builtin("see");
+		this.add_builtin("alias");
 
 		this.add_builtin("mkdir");
 		this.add_builtin("touch");
@@ -110,9 +113,13 @@ function sum(a, b) {
 	}
 
 	exec(str: string): number {
-		const [cmd, ...args] = str.split(" ").filter(Boolean);
+		let [cmd, ...args] = str.split(" ").filter(Boolean);
 		if (!cmd) {
 			return 0;
+		}
+
+		while (this.aliases.has(cmd)) {
+			cmd = this.aliases.get(cmd) as string;
 		}
 
 		this.add_to_hist(cmd, args);
@@ -255,6 +262,40 @@ function sum(a, b) {
 			this.io.print(`${v}: ${this.env.vars[v]}`);
 		}
 
+		return 0;
+	}
+	alias(argc: number, argv: string[]): number {
+		if (
+			argc < 1 ||
+			(argc !== 2 && argv[argc - 1] !== "-p" && argv[argc - 1] !== "--print")
+		) {
+			this.io.eprint(
+				"Usage: alias &lt;ALIAS&gt; &lt;COMMAND&gt; | &lt;ALIASES&gt; [OPTIONS]",
+			);
+			this.io.eprint("OPTIONS:\n  -p | --print: print aliases");
+			return 1;
+		}
+
+		if (argv[argc - 1] === "-p" || argv[argc - 1] === "--print") {
+			argv.pop();
+			if (argv.length === 0) {
+				this.aliases.forEach((cmd, alias) => this.io.print(`${alias}: ${cmd}`));
+				return 0;
+			}
+
+			for (const alias of argv) {
+				const cmd = this.aliases.get(alias);
+				if (!cmd) {
+					this.io.eprint(`Unknown alias: '${alias}'`);
+					continue;
+				}
+				this.io.print(`${alias}: ${cmd}`);
+			}
+
+			return 0;
+		}
+
+		this.aliases.set(argv[0], argv[1]);
 		return 0;
 	}
 

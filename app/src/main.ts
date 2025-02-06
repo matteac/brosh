@@ -63,7 +63,7 @@ io.set_input_listener((event: KeyboardEvent) => {
 
 				sh.exec(src);
 				output.scrollTo(0, output.scrollHeight);
-				terminal.scrollTo(0, terminal.scrollHeight + 100);
+				terminal.scrollTo(0, terminal.scrollHeight);
 
 				input_prompt.innerHTML = `${env.current_dir} ${PROMPT} `;
 			}
