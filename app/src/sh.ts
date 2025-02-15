@@ -472,7 +472,7 @@ Pointer :   ^
 		const default_stack_size = 3000;
 
 		if (argc < 1) {
-			this.io.eprint("Usage: bf <FILE> [STACK_SIZE]");
+			this.io.eprint("Usage: bf &lt;FILE&gt; [STACK_SIZE]");
 			return 1;
 		}
 
