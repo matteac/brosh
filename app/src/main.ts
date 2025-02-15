@@ -10,7 +10,7 @@ const PROMPT = "$";
 
 const terminal = document.querySelector("#terminal") as HTMLElement;
 const output = document.querySelector("#output") as HTMLElement;
-const input = document.querySelector("#input") as HTMLElement;
+const input = document.querySelector("#input") as HTMLInputElement;
 const input_prompt = document.querySelector("#prompt") as HTMLElement;
 
 const editor_dialog = document.querySelector("#editor") as HTMLDialogElement;

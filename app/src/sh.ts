@@ -39,6 +39,7 @@ export class Shell {
 		this.add_builtin("edit");
 
 		this.add_builtin("js");
+		this.add_builtin("bf");
 
 		this.add_builtin("hist");
 		this.blacklist_hist("hist");
@@ -58,6 +59,48 @@ function sum(a, b) {
   return a + b;
 }
 `,
+		);
+
+		this.fs.create_dir("/dev");
+
+		// brainfuck example file
+		// see https://en.wikipedia.org/wiki/Brainfuck#Hello_World!
+		this.fs.create_file("/dev/example.bf");
+		this.fs.write_file(
+			"/dev/example.bf",
+			`++++++++                Set Cell #0 to 8
+[
+    >++++               Add 4 to Cell #1; this will always set Cell #1 to 4
+    [                   as the cell will be cleared by the loop
+        >++             Add 2 to Cell #2
+        >+++            Add 3 to Cell #3
+        >+++            Add 3 to Cell #4
+        >+              Add 1 to Cell #5
+        <<<<-           Decrement the loop counter in Cell #1
+    ]                   Loop until Cell #1 is zero; number of iterations is 4
+    >+                  Add 1 to Cell #2
+    >+                  Add 1 to Cell #3
+    >-                  Subtract 1 from Cell #4
+    >>+                 Add 1 to Cell #6
+    [<]                 Move back to the first zero cell you find; this will
+                        be Cell #1 which was cleared by the previous loop
+    <-                  Decrement the loop Counter in Cell #0
+]                       Loop until Cell #0 is zero; number of iterations is 8
+
+The result of this is:
+Cell no :   0   1   2   3   4   5   6
+Contents:   0   0  72 104  88  32   8
+Pointer :   ^
+
+>>.                     Cell #2 has value 72 which is 'H'
+>---.                   Subtract 3 from Cell #3 to get 101 which is 'e'
++++++++..+++.           Likewise for 'llo' from Cell #3
+>>.                     Cell #5 is 32 for the space
+<-.                     Subtract 1 from Cell #4 for 87 to give a 'W'
+<.                      Cell #3 was set to 'o' from the end of 'Hello'
++++.------.--------.    Cell #3 for 'rl' and 'd'
+>>+.                    Add 1 to Cell #5 gives us an exclamation point
+>++.                    And finally a newline from Cell #6`,
 		);
 	}
 
@@ -420,6 +463,102 @@ function sum(a, b) {
 	list_builtins(_argc: number, _argv: string[]): number {
 		for (const builtin of this.builtins) {
 			this.io.print(builtin);
+		}
+
+		return 0;
+	}
+
+	bf(argc: number, argv: string[]): number {
+		const default_stack_size = 3000;
+
+		if (argc < 1) {
+			this.io.eprint("Usage: bf <FILE> [STACK_SIZE]");
+			return 1;
+		}
+
+		const filepath = argv[0];
+
+		if (!this.fs.exists(filepath)) {
+			this.io.eprint(`File doesn't exist: '${filepath}'`);
+			return 1;
+		}
+
+		let stack_size = default_stack_size;
+		if (argc >= 2) {
+			const parsed_size = Number(argv[1]);
+			if (Number.isNaN(parsed_size) || parsed_size <= 0) {
+				this.io.eprint("Invalid stack size");
+				return 1;
+			}
+			stack_size = parsed_size;
+		}
+
+		const code = this.fs.read_file(filepath);
+
+		if (typeof code !== "string") {
+			this.io.eprint("Error reading file");
+			return 1;
+		}
+
+		const stack = new Uint8Array(stack_size);
+		let sp = 0;
+		let ip = 0;
+		const loop_stack: number[] = [];
+
+		this.io.newline_empty();
+
+		while (ip < code.length) {
+			const command = code[ip];
+
+			switch (command) {
+				case ">":
+					sp = (sp + 1) % stack_size;
+					break;
+				case "<":
+					sp = (sp - 1 + stack_size) % stack_size;
+					break;
+				case "+":
+					stack[sp] = (stack[sp] + 1) & 255;
+					break;
+				case "-":
+					stack[sp] = (stack[sp] === 0 ? 255 : stack[sp] - 1) & 255;
+					break;
+				case ".":
+					this.io.put(String.fromCharCode(stack[sp]));
+					break;
+				case "[":
+					if (stack[sp] === 0) {
+						let depth = 1;
+						ip++;
+						while (ip < code.length) {
+							if (code[ip] === "[") depth++;
+							if (code[ip] === "]") depth--;
+							if (depth === 0) break;
+							ip++;
+						}
+						if (depth !== 0) {
+							this.io.eprint("Unmatched '['");
+							return 1;
+						}
+					} else {
+						loop_stack.push(ip);
+					}
+					break;
+				case "]":
+					if (loop_stack.length === 0) {
+						this.io.eprint("Unmatched ']'");
+						return 1;
+					}
+					if (stack[sp] !== 0) {
+						ip = loop_stack[loop_stack.length - 1];
+					} else {
+						loop_stack.pop();
+					}
+					break;
+				default:
+					break;
+			}
+			ip++;
 		}
 
 		return 0;

@@ -1,9 +1,9 @@
 export class IO {
 	output: HTMLElement;
-	input: HTMLElement;
+	input: HTMLInputElement;
 	private __input_listener: (event: KeyboardEvent) => void = (_) => {};
 
-	constructor(output: HTMLElement, input: HTMLElement) {
+	constructor(output: HTMLElement, input: HTMLInputElement) {
 		this.output = output;
 		this.input = input;
 	}
@@ -40,11 +40,28 @@ export class IO {
 		}
 	}
 
+	// @ts-ignore
+	put(char): void {
+		if (char === "\n") {
+			this.newline_empty();
+			return;
+		}
+
+		if (!this.output.lastChild) {
+			this.newline();
+		}
+		// @ts-ignore
+		this.output.lastChild.innerHTML += `${char}`;
+	}
+
 	clear() {
 		this.output.innerHTML = "";
 	}
 
 	newline() {
 		this.output.innerHTML += `<div class="line"><pre> </pre></div>`;
+	}
+	newline_empty() {
+		this.output.innerHTML += `<div class="line"></div>`;
 	}
 }
